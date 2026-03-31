@@ -19,7 +19,7 @@ export default function RootLayout({
     <html lang="id" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans antialiased`}>
         {children}
-        <Toaster position="top-center" richColors closeButton />
+        <Toaster position="top-center" richColors />
       </body>
     </html>
   );

@@ -3,5 +3,5 @@ export default function TenantRootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <>{children}</>;
+  return <div className="min-h-screen w-full bg-white">{children}</div>;
 }

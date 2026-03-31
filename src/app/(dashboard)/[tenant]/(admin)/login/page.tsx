@@ -24,8 +24,7 @@ export default function TenantLoginPage() {
   const router = useRouter();
   const { register, handleSubmit } = useForm();
 
-  // Nama tenant dari URL (misal: 'minibos')
-  const tenantName = params.tenant as string;
+  const tenantSlug = params.tenant as string;
 
   const onSubmit = async (data: any) => {
     setLoading(true);
@@ -33,90 +32,75 @@ export default function TenantLoginPage() {
       const res = await api.post("/login", {
         email: data.email,
         password: data.password,
-        tenant_slug: tenantName, // Kirim slug ke Go untuk validasi kepemilikan
+        tenant_slug: tenantSlug,
       });
 
-      // Simpan JWT ke Cookie (berlaku 7 hari)
       setCookie("auth_token", res.data.token, {
         maxAge: 60 * 60 * 24 * 7,
         path: "/",
-        // Jika sudah production, tambahkan domain: ".bookinaja.com"
       });
 
-      toast.success(`Selamat datang kembali di ${tenantName.toUpperCase()}!`);
+      toast.success("Login Berhasil!");
 
-      // Redirect ke Dashboard Utama tenant
-      router.push(`/${tenantName}`);
+      // REDIRECT KE PATH KHUSUS DASHBOARD
+      router.push(`/dashboard`);
     } catch (err: any) {
-      toast.error(err.response?.data?.error || "Email atau password salah.");
+      toast.error(err.response?.data?.error || "Login Gagal.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12 selection:bg-blue-500/30">
-      <Card className="w-full max-w-[400px] border-none shadow-[0_20px_50px_rgba(0,0,0,0.05)] rounded-[2rem] p-4">
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
+      <Card className="w-full max-w-[420px] border-none shadow-[0_32px_64px_-15px_rgba(0,0,0,0.1)] rounded-[2.5rem] p-4">
         <CardHeader className="space-y-4 text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-600 shadow-lg shadow-blue-500/20">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-600 shadow-xl shadow-blue-600/20">
             <Lock className="h-8 w-8 text-white" />
           </div>
-          <div className="space-y-1">
-            <CardTitle className="text-2xl font-black tracking-tight">
+          <div>
+            <CardTitle className="text-3xl font-black tracking-tight">
               Admin Login
             </CardTitle>
-            <CardDescription className="text-sm font-medium">
-              Masuk ke panel{" "}
-              <span className="text-blue-600 font-bold uppercase tracking-wider">
-                {tenantName}
-              </span>
+            <CardDescription className="font-bold uppercase text-blue-600 text-xs tracking-[0.2em] mt-2">
+              Panel {tenantSlug}
             </CardDescription>
           </div>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label className="font-bold ml-1">Email Admin</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
                 <Input
-                  id="email"
                   type="email"
                   placeholder="admin@email.com"
-                  className="h-12 pl-10 rounded-xl border-slate-200"
+                  className="h-13 pl-12 rounded-xl border-slate-200"
                   {...register("email")}
                   required
                 />
               </div>
             </div>
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
-                <button
-                  type="button"
-                  className="text-xs font-bold text-blue-600 hover:underline"
-                >
-                  Lupa?
-                </button>
-              </div>
+              <Label className="font-bold ml-1">Password</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
                 <Input
-                  id="password"
                   type="password"
                   placeholder="••••••••"
-                  className="h-12 pl-10 rounded-xl border-slate-200"
+                  className="h-13 pl-12 rounded-xl border-slate-200"
                   {...register("password")}
                   required
                 />
               </div>
             </div>
             <Button
-              className="w-full h-12 rounded-xl bg-blue-600 font-bold shadow-lg shadow-blue-600/20 hover:bg-blue-700 active:scale-95 transition-all"
+              className="w-full h-14 rounded-2xl bg-blue-600 text-lg font-bold shadow-xl shadow-blue-600/20 hover:bg-blue-700 transition-all active:scale-95"
               disabled={loading}
             >
               {loading ? "Memverifikasi..." : "Masuk ke Dashboard"}
-              {!loading && <ArrowRight className="ml-2 h-4 w-4" />}
+              {!loading && <ArrowRight className="ml-2 h-5 w-5" />}
             </Button>
           </form>
         </CardContent>
