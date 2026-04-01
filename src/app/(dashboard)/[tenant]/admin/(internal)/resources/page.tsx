@@ -176,7 +176,7 @@ export default function ResourcesPage() {
 
                   {/* Actions Footer */}
                   <div className="flex gap-3 pt-6 border-t border-slate-50">
-                    <Link href={`/resources/${res.id}`} className="flex-1">
+                    <Link href={`/admin/resources/${res.id}`} className="flex-1">
                       <Button
                         variant="outline"
                         className="w-full h-11 rounded-xl font-black text-[10px] uppercase tracking-widest border-slate-200 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all active:scale-95 shadow-sm"

@@ -16,20 +16,21 @@ import {
   Zap,
   Calendar,
   Gamepad2,
+  User,
+  MapPin,
+  PlusCircle,
 } from "lucide-react";
 import api from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 export default function BookingStatusPage() {
   const params = useParams();
-  if (!params.token) return <div>Token tidak ditemukan</div>;
+  if(!params.token) return <div>Tidak ditemukan</div>
   const [booking, setBooking] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!params.token) return;
-
-    // Mengambil data detail booking yang sudah di-join dari Backend Go
     api
       .get(`/guest/status/${params.token}`)
       .then((res) => {
@@ -41,7 +42,6 @@ export default function BookingStatusPage() {
 
   const formatIDR = (val: number) => new Intl.NumberFormat("id-ID").format(val);
 
-  // Helper untuk hitung durasi dalam jam dari start_time ke end_time
   const getDuration = (start: string, end: string) => {
     const s = new Date(start);
     const e = new Date(end);
@@ -50,178 +50,162 @@ export default function BookingStatusPage() {
 
   if (loading)
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-white space-y-4">
-        <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
-        <p className="font-black italic uppercase text-[10px] tracking-widest text-slate-400">
-          Memverifikasi Tiket...
-        </p>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white p-6">
+        <Loader2 className="h-10 w-10 animate-spin text-blue-600 mb-4" />
+        <p className="font-black italic uppercase text-[10px] tracking-widest text-slate-400">Verifikasi Tiket...</p>
       </div>
     );
 
   if (!booking)
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center">
-        <h1 className="text-2xl font-black italic uppercase tracking-tighter text-slate-900">
-          Tiket Tidak Ditemukan
-        </h1>
-        <p className="text-slate-500 text-sm mt-2 font-medium">
-          Maaf, kode akses ini tidak terdaftar di sistem kami.
-        </p>
+        <h1 className="text-2xl font-black italic uppercase tracking-tighter text-slate-900">Tiket Tidak Ditemukan</h1>
+        <p className="text-slate-500 text-sm mt-2">Maaf, kode akses ini tidak valid.</p>
       </div>
     );
 
   const isPending = booking.status === "pending";
+  const durationInHours = getDuration(booking.start_time, booking.end_time);
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans pb-20 selection:bg-blue-500/30">
-      {/* TOP DECORATION */}
-      <div className="h-64 bg-slate-950 w-full absolute top-0 left-0" />
+    <div className="min-h-screen bg-slate-50 font-sans pb-10 selection:bg-blue-600/30 overflow-x-hidden">
+      {/* HEADER BACKGROUND */}
+      <div className="h-60 bg-slate-950 w-full absolute top-0 left-0" />
 
-      <main className="relative z-10 max-w-xl mx-auto pt-12 px-6 space-y-6">
-        {/* STATUS CARD */}
-        <Card className="rounded-[2.5rem] border-none shadow-2xl overflow-hidden bg-white animate-in fade-in slide-in-from-bottom-4 duration-700">
-          <div
-            className={cn(
-              "p-10 text-center space-y-4 transition-colors",
-              isPending ? "bg-blue-600" : "bg-emerald-600",
-            )}
-          >
-            <div className="h-20 w-20 bg-white/20 rounded-full flex items-center justify-center mx-auto backdrop-blur-md ring-8 ring-white/10">
-              <CheckCircle2 className="h-10 w-10 text-white stroke-[3]" />
+      <main className="relative z-10 max-w-lg mx-auto pt-6 px-4 sm:px-6 space-y-4">
+        
+        {/* TICKET MAIN CARD */}
+        <Card className="rounded-[2.5rem] border-none shadow-2xl overflow-hidden bg-white">
+          
+          {/* HEADER STATUS */}
+          <div className={cn("p-8 text-center space-y-3 transition-colors", isPending ? "bg-blue-600" : "bg-emerald-600")}>
+            <div className="h-16 w-16 bg-white/20 rounded-full flex items-center justify-center mx-auto backdrop-blur-md ring-4 ring-white/10">
+              <CheckCircle2 className="h-8 w-8 text-white stroke-[3]" />
             </div>
             <div className="space-y-1">
-              <h2 className="text-white font-black italic uppercase text-3xl tracking-tighter leading-none">
-                {isPending ? "Booking Berhasil!" : "Pesanan Terkonfirmasi"}
+              <h2 className="text-white font-black italic uppercase text-2xl tracking-tighter leading-none">
+                {isPending ? "Booking Berhasil!" : "Siap Bermain!"}
               </h2>
-              <p className="text-white/70 text-[9px] font-bold uppercase tracking-[0.3em]">
-                Access Token: {params.token.toString().slice(0, 8)}...
+              <p className="text-white/60 text-[8px] font-black uppercase tracking-[0.2em]">
+                Token: {params.token.toString().slice(0, 12).toUpperCase()}
               </p>
             </div>
           </div>
 
-          <div className="p-8 space-y-8">
-            {/* ALERT BOX */}
-            {isPending && (
-              <div className="bg-blue-50 border-2 border-blue-100 p-5 rounded-3xl flex gap-4 items-start">
-                <Zap className="h-5 w-5 text-blue-600 shrink-0 mt-1 fill-blue-600 animate-pulse" />
-                <div className="space-y-1">
-                  <p className="font-black italic uppercase text-xs text-blue-900 leading-tight">
-                    Selesaikan Pembayaran
-                  </p>
-                  <p className="text-[10px] font-bold text-blue-700/70 leading-relaxed uppercase">
-                    Silahkan tunjukkan tiket ini ke kasir untuk aktivasi unit{" "}
-                    {booking.resource_name}.
-                  </p>
+          <div className="p-6 sm:p-8 space-y-8">
+            {/* SCHEDULE BLOCK */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-slate-400">
+                 <Calendar className="h-3 w-3" />
+                 <p className="text-[9px] font-black uppercase tracking-widest italic">
+                    {new Date(booking.start_time).toLocaleDateString("id-ID", { weekday: 'long', day: 'numeric', month: 'long' })}
+                 </p>
+              </div>
+              
+              <div className="bg-slate-50 rounded-3xl p-6 flex items-center justify-between border border-slate-100">
+                <div className="text-center">
+                   <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Mulai</p>
+                   <p className="text-2xl font-black italic text-slate-900 leading-none">
+                     {new Date(booking.start_time).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
+                   </p>
+                </div>
+
+                <div className="flex-1 px-4">
+                   <div className="h-[1px] w-full bg-slate-200 relative">
+                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-blue-600 text-white text-[7px] font-black px-2 py-0.5 rounded-full uppercase italic whitespace-nowrap shadow-md">
+                        {durationInHours}H
+                      </div>
+                   </div>
+                </div>
+
+                <div className="text-center">
+                   <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Selesai</p>
+                   <p className="text-2xl font-black italic text-slate-900 leading-none">
+                     {new Date(booking.end_time).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
+                   </p>
                 </div>
               </div>
-            )}
+            </div>
 
-            {/* DETAIL SUMMARY */}
-            <div className="space-y-6">
-              <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
-                <ReceiptText className="h-5 w-5 text-slate-400" />
-                <h3 className="font-black italic uppercase text-sm tracking-widest text-slate-900">
-                  Rincian Tiket
-                </h3>
+            {/* INFO GRID */}
+            <div className="grid grid-cols-2 gap-4">
+               <div className="space-y-1">
+                  <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1"><User className="h-2.5 w-2.5"/> Pemesan</p>
+                  <p className="font-black italic text-slate-900 uppercase text-xs truncate">{booking.customer_name}</p>
+               </div>
+               <div className="space-y-1 text-right">
+                  <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest flex items-center justify-end gap-1"><MapPin className="h-2.5 w-2.5"/> Unit</p>
+                  <p className="font-black italic text-blue-600 uppercase text-xs">{booking.resource_name}</p>
+               </div>
+            </div>
+
+            {/* ITEMS DETAIL */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <ReceiptText className="h-3.5 w-3.5 text-slate-400" />
+                <h3 className="font-black italic uppercase text-[10px] tracking-widest text-slate-900">Rincian Layanan</h3>
               </div>
-
-              <div className="grid grid-cols-2 gap-y-8">
-                <div className="space-y-1">
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                    Penyewa
-                  </p>
-                  <p className="font-black italic text-slate-900 uppercase truncate pr-2">
-                    {booking.customer_name}
-                  </p>
-                </div>
-                <div className="space-y-1 text-right">
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                    Ruangan / Unit
-                  </p>
-                  <Badge className="bg-slate-900 text-white border-none rounded-lg italic uppercase text-[10px]">
-                    {booking.resource_name}
-                  </Badge>
-                </div>
-
-                <div className="space-y-1">
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                    Waktu Main
-                  </p>
-                  <p className="font-black italic text-slate-900 uppercase flex items-center gap-1.5 text-sm">
-                    <Clock className="h-3.5 w-3.5 text-blue-600" />
-                    {new Date(booking.start_time).toLocaleTimeString("id-ID", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}{" "}
-                    WIB
-                  </p>
-                </div>
-                <div className="space-y-1 text-right">
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                    Durasi
-                  </p>
-                  <p className="font-black italic text-slate-900 uppercase underline decoration-blue-500 underline-offset-4 decoration-2">
-                    {getDuration(booking.start_time, booking.end_time)} JAM SEWA
-                  </p>
-                </div>
-
-                {/* LIST ITEMS / OPTIONS */}
-                <div className="col-span-2 space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                  <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest text-center">
-                    Fasilitas & Add-ons
-                  </p>
-                  <div className="flex flex-wrap justify-center gap-2">
-                    {booking.options?.map((opt: any) => (
-                      <Badge
-                        key={opt.id}
-                        variant="secondary"
-                        className="bg-white border-slate-200 text-slate-600 text-[9px] font-bold uppercase italic px-3 py-1"
-                      >
-                        {opt.item_name}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
+              
+              <div className="space-y-2">
+                {booking.options?.map((opt: any) => {
+                  const isMain = opt.item_type === 'main';
+                  return (
+                    <div key={opt.id} className="flex justify-between items-center bg-slate-50/50 p-3 rounded-2xl border border-slate-100">
+                      <div className="flex items-center gap-3">
+                        <div className={cn("h-7 w-7 rounded-lg flex items-center justify-center", isMain ? "bg-slate-900 text-white" : "bg-white text-purple-600 border border-purple-100")}>
+                          {isMain ? <Gamepad2 className="h-3.5 w-3.5" /> : <PlusCircle className="h-3.5 w-3.5" />}
+                        </div>
+                        <div>
+                          <p className="font-black italic text-[10px] text-slate-900 uppercase leading-none">{opt.item_name}</p>
+                          <p className="text-[7px] font-bold text-slate-400 uppercase mt-1 leading-none">{isMain ? 'Sewa Per Jam' : 'Add-on (Flat)'}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-black italic text-[10px] text-slate-900">Rp {formatIDR(opt.price_at_booking)}</p>
+                        {isMain && (
+                           <p className="text-[7px] font-bold text-slate-300 uppercase leading-none mt-1">Total {durationInHours} Jam</p>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             </div>
 
             <Separator className="bg-slate-100" />
 
-            {/* TOTAL PRICE AREA */}
-            <div className="flex items-end justify-between">
-              <div className="space-y-1">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">
-                  Total Tagihan
-                </p>
-                <p className="text-4xl font-black italic tracking-tighter text-blue-600 leading-none">
-                  Rp {formatIDR(booking.total_amount)}
-                </p>
-              </div>
-              <div className="text-right">
-                <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-none text-[8px] font-black uppercase py-1 px-3">
-                  {booking.status}
-                </Badge>
-              </div>
+            {/* BILLING */}
+            <div className="flex items-center justify-between bg-slate-950 p-6 rounded-[2rem] shadow-xl relative overflow-hidden">
+               <Zap className="absolute right-0 bottom-0 h-16 w-16 text-white/5 -rotate-12 translate-x-2 translate-y-2" />
+               <div className="space-y-0.5 z-10">
+                  <p className="text-[8px] font-black text-blue-500 uppercase tracking-widest">Total Bayar</p>
+                  <p className="text-3xl font-black italic text-white tracking-tighter leading-none">Rp {formatIDR(booking.total_amount)}</p>
+               </div>
+               <div className="z-10">
+                  <Badge className={cn("border-none text-[8px] font-black uppercase py-1 px-3 rounded-full italic shadow-lg", isPending ? "bg-orange-500 text-white" : "bg-emerald-500 text-white")}>
+                    {booking.status}
+                  </Badge>
+               </div>
             </div>
           </div>
         </Card>
 
-        {/* ACTION BUTTONS */}
-        <div className="grid grid-cols-2 gap-4 pt-2">
-          <Button className="h-16 rounded-3xl bg-slate-900 hover:bg-black font-black uppercase italic tracking-widest text-[10px] gap-2 border-b-8 border-slate-700 active:translate-y-1 active:border-b-0 transition-all">
-            <MessageSquare className="h-4 w-4 fill-white" /> Chat Admin
+        {/* MOBILE ACTIONS */}
+        <div className="grid grid-cols-2 gap-3">
+          <Button className="h-14 rounded-2xl bg-slate-900 hover:bg-black font-black uppercase italic tracking-widest text-[9px] gap-2 border-b-4 border-slate-700 active:translate-y-1 active:border-b-0 transition-all">
+            <MessageSquare className="h-3.5 w-3.5 fill-white" /> WhatsApp
           </Button>
           <Button
             variant="outline"
             onClick={() => window.print()}
-            className="h-16 rounded-3xl border-2 border-slate-200 bg-white hover:bg-slate-50 font-black uppercase italic tracking-widest text-[10px] gap-2 active:scale-95 transition-all"
+            className="h-14 rounded-2xl border-2 border-slate-200 bg-white hover:bg-slate-50 font-black uppercase italic tracking-widest text-[9px] gap-2 active:scale-95 transition-all shadow-sm"
           >
-            <Share2 className="h-4 w-4" /> Simpan Tiket
+            <Share2 className="h-3.5 w-3.5" /> Simpan
           </Button>
         </div>
 
-        <p className="text-center text-[9px] font-black uppercase tracking-[0.3em] text-slate-400 italic pt-6">
-          BOOKINAJA.COM &bull; {new Date().getFullYear()}
+        <p className="text-center text-[8px] font-black uppercase tracking-[0.3em] text-slate-400 italic pt-4 opacity-50">
+          POWERED BY BATAM ENGINE V1.0
         </p>
       </main>
     </div>
