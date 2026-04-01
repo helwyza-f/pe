@@ -1,11 +1,17 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-export function proxy(req: NextRequest) {
+export function middleware(req: NextRequest) {
   const url = req.nextUrl;
   const hostname = req.headers.get("host") || "";
 
   const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "bookinaja.com";
+
+  // 1. PROTEKSI: Jika hostname adalah api.bookinaja.com, biarkan lewat (Bypass)
+  // Karena API dihandle oleh AWS EC2, bukan Vercel rewrite
+  if (hostname.startsWith("api.")) {
+    return NextResponse.next();
+  }
 
   // Ekstrak subdomain
   const currentHost = hostname
@@ -13,26 +19,21 @@ export function proxy(req: NextRequest) {
     .replace(":3000", "")
     .replace("www.", "");
 
-  // 1. Jalur Marketing / Landing Page Global
-  // Jika akses bookinaja.com atau localhost:3000 tanpa subdomain
+  // 2. Jalur Marketing / Landing Page Global
   if (
-    currentHost === "" ||
-    currentHost === rootDomain ||
+    currentHost === "" || 
+    currentHost === rootDomain || 
     hostname === "localhost:3000"
   ) {
-    // Jika user mencoba akses /admin di root domain, biarkan Next.js handle 404 atau redirect
     return NextResponse.next();
   }
 
-  // 2. Jalur Tenant (Subdomain)
-  // Contoh: minibos.localhost:3000/admin/bookings
-  // akan di-rewrite ke /minibos/admin/bookings
-
-  // Mencegah double slash jika pathname kosong
+  // 3. Jalur Tenant (Subdomain) Rewrite
+  // Contoh: minibos.bookinaja.com/admin -> rewrite ke /minibos/admin
   const path = url.pathname === "/" ? "" : url.pathname;
 
   return NextResponse.rewrite(
-    new URL(`/${currentHost}${path}${url.search}`, req.url),
+    new URL(`/${currentHost}${path}${url.search}`, req.url)
   );
 }
 
@@ -40,7 +41,7 @@ export const config = {
   matcher: [
     /*
      * Match semua request kecuali:
-     * 1. /api (API routes)
+     * 1. /api (Next.js Internal API routes)
      * 2. /_next (Next.js internals)
      * 3. /_static (Static files)
      * 4. /_vercel (Vercel internals)
