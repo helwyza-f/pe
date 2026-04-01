@@ -5,17 +5,14 @@ export function proxy(req: NextRequest) {
   const url = req.nextUrl;
   const hostname = req.headers.get("host") || "";
 
-  // Ambil root domain dari env atau default
   const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "bookinaja.com";
 
-  // 1. BYPASS UNTUK API
+  // 1. BYPASS UNTUK SUBDOMAIN API (api.bookinaja.com)
   if (hostname.startsWith(`api.`)) {
     return NextResponse.next();
   }
 
   // 2. LOGIKA ROOT DOMAIN (Marketing Page)
-  // Jika hostname ADALAH bookinaja.com atau www.bookinaja.com
-  // Kita TIDAK mau melakukan rewrite ke folder [tenant]
   if (
     hostname === rootDomain || 
     hostname === `www.${rootDomain}` || 
@@ -25,31 +22,33 @@ export function proxy(req: NextRequest) {
   }
 
   // 3. LOGIKA SUBDOMAIN (Tenant Page)
-  // Ekstrak subdomain (contoh: 'miniboss' dari 'miniboss.bookinaja.com')
   const currentHost = hostname
     .replace(`.${rootDomain}`, "")
     .replace(":3000", "")
     .replace("www.", "");
 
-  // Jika setelah dibersihkan ternyata masih ada isinya (berarti itu subdomain)
+  // Hanya rewrite jika benar-benar ada subdomain tenant (misal: 'minibos')
   if (currentHost && currentHost !== rootDomain) {
     const path = url.pathname === "/" ? "" : url.pathname;
     
-    // Rewrite ke folder tenant: /miniboss/admin atau /miniboss/booking
+    // Rewrite ke folder tenant: /minibos/admin atau /minibos/booking
     return NextResponse.rewrite(
       new URL(`/${currentHost}${path}${url.search}`, req.url)
     );
   }
 
-  // Default: Biarkan Next.js handle normal
   return NextResponse.next();
 }
 
 export const config = {
   matcher: [
     /*
-     * Match semua request kecuali file statis dan internal Next.js
+     * Match semua request KECUALI:
+     * 1. /api atau /api/ (Abaikan semua request API)
+     * 2. /_next (Next.js internals)
+     * 3. /_static, /_vercel
+     * 4. File dengan ekstensi (e.g. favicon.ico, logo.png)
      */
-    "/((?!api/|_next/|_static/|_vercel|[\\w-]+\\.\\w+).*)",
+    "/((?!api|_next/|_static/|_vercel|[\\w-]+\\.\\w+).*)",
   ],
 };
