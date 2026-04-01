@@ -11,115 +11,176 @@ import {
   MonitorPlay,
   Settings,
   LogOut,
+  Zap,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
-export function Sidebar() {
+interface SidebarProps {
+  isCollapsed: boolean;
+  setIsCollapsed: (v: boolean) => void;
+}
+
+export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
   const pathname = usePathname();
   const params = useParams();
-
-  // Ambil tenant untuk keperluan UI saja (Label Logo),
-  // tapi jangan dipakai di URL href jika sudah pakai subdomain.
-  const tenant = params.tenant as string;
+  const tenant = (params.tenant as string) || "HUB";
 
   const routes = [
-    {
-      label: "Dashboard",
-      icon: LayoutDashboard,
-      href: "/dashboard", // Cukup arahkan ke path aslinya
-      active: pathname === "/dashboard" || pathname === `/${tenant}/dashboard`,
-    },
-    {
-      label: "Bookings",
-      icon: CalendarDays,
-      href: "/bookings",
-      active: pathname === "/bookings" || pathname === `/${tenant}/bookings`,
-    },
-    {
-      label: "POS / Kasir",
-      icon: MonitorPlay,
-      href: "/pos",
-      active: pathname === "/pos" || pathname === `/${tenant}/pos`,
-    },
-    {
-      label: "Resources",
-      icon: Box,
-      href: "/resources",
-      active: pathname === "/resources" || pathname === `/${tenant}/resources`,
-    },
-    {
-      label: "Customers",
-      icon: Users,
-      href: "/customers",
-      active: pathname === "/customers" || pathname === `/${tenant}/customers`,
-    },
+    { label: "Dashboard", icon: LayoutDashboard, href: "/admin/dashboard" },
+    { label: "Bookings", icon: CalendarDays, href: "/admin/bookings" },
+    { label: "POS / Kasir", icon: MonitorPlay, href: "/admin/pos" },
+    { label: "Resources", icon: Box, href: "/admin/resources" },
+    { label: "Customers", icon: Users, href: "/admin/customers" },
   ];
 
   return (
-    <div className="flex h-full flex-col bg-white border-r border-slate-100 selection:bg-blue-500/30">
-      {/* Logo Section */}
-      <div className="flex h-20 items-center px-8 border-b border-slate-50">
-        <Link href="/" className="group flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 transition-transform group-hover:rotate-6 shadow-lg shadow-blue-600/20">
-            <span className="font-black text-white text-xs">B</span>
+    <div className="relative flex h-full flex-col bg-slate-950 font-sans border-r border-white/5">
+      <button
+        onClick={() => setIsCollapsed(!isCollapsed)}
+        className="absolute -right-3 top-10 z-[60] flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-slate-900 text-white shadow-xl hover:bg-blue-600 transition-all active:scale-90"
+      >
+        {isCollapsed ? (
+          <ChevronRight className="h-3 w-3" />
+        ) : (
+          <ChevronLeft className="h-3 w-3" />
+        )}
+      </button>
+
+      <div
+        className={cn(
+          "flex h-24 items-center px-6 transition-all border-b border-white/5 shrink-0",
+          isCollapsed ? "justify-center" : "justify-start bg-slate-900/40",
+        )}
+      >
+        <Link href="/admin/dashboard" className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600 shadow-lg border-b-4 border-blue-800">
+            <Zap className="h-5 w-5 text-white fill-white" />
           </div>
-          <span className="text-lg font-black tracking-tighter text-slate-900 uppercase">
-            {tenant}
-          </span>
-        </Link>
-      </div>
-
-      {/* Nav Links */}
-      <div className="flex flex-col flex-1 gap-2 p-4 pt-6">
-        {routes.map((route) => (
-          <Link
-            key={route.href}
-            href={route.href}
-            className={cn(
-              "group flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold transition-all duration-200",
-              route.active
-                ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20 translate-x-1"
-                : "text-slate-500 hover:bg-slate-50 hover:text-blue-600",
-            )}
-          >
-            <route.icon
-              className={cn(
-                "h-5 w-5",
-                route.active
-                  ? "text-white"
-                  : "text-slate-400 group-hover:text-blue-600",
-              )}
-            />
-            {route.label}
-          </Link>
-        ))}
-      </div>
-
-      {/* Footer Sidebar (Settings & Logout) */}
-      <div className="p-4 border-t border-slate-50 space-y-2">
-        <Link
-          href="/settings"
-          className={cn(
-            "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold transition-all",
-            pathname === "/settings" || pathname === `/${tenant}/settings`
-              ? "bg-slate-900 text-white shadow-lg"
-              : "text-slate-500 hover:bg-slate-50 hover:text-blue-600",
+          {!isCollapsed && (
+            <div className="flex flex-col animate-in fade-in slide-in-from-left-2 duration-300">
+              <span className="text-sm font-black italic tracking-tighter text-white uppercase leading-none truncate w-32">
+                {tenant}
+              </span>
+              <span className="text-[8px] font-black text-blue-500 uppercase tracking-[0.4em] mt-1">
+                Management
+              </span>
+            </div>
           )}
-        >
-          <Settings className="h-5 w-5" />
-          Settings
         </Link>
+      </div>
+
+      <div className="flex flex-col flex-1 gap-2 p-3 pt-8 overflow-y-auto scrollbar-hide">
+        {routes.map((route) => {
+          const isActive = pathname.includes(route.href);
+
+          return (
+            <Tooltip key={route.href}>
+              {/* Force tooltip tutup kalau sidebar tidak collapsed */}
+              <TooltipTrigger asChild>
+                <Link
+                  href={route.href}
+                  className={cn(
+                    "group flex items-center transition-all duration-300",
+                    isCollapsed
+                      ? "h-12 w-12 justify-center mx-auto rounded-2xl"
+                      : "px-5 py-4 w-full gap-4 rounded-2xl",
+                    isActive
+                      ? "bg-blue-600 text-white shadow-lg"
+                      : "text-slate-500 hover:bg-white/5 hover:text-white",
+                  )}
+                >
+                  <route.icon
+                    className={cn(
+                      "shrink-0",
+                      isCollapsed ? "h-5 w-5" : "h-4 w-4",
+                      isActive && "scale-110",
+                    )}
+                  />
+                  {!isCollapsed && (
+                    <span className="text-[10px] font-black uppercase italic tracking-widest truncate animate-in fade-in duration-300">
+                      {route.label}
+                    </span>
+                  )}
+                </Link>
+              </TooltipTrigger>
+              {isCollapsed && (
+                <TooltipContent
+                  side="right"
+                  className="bg-blue-600 border-none font-black italic uppercase text-[9px] text-white px-3 py-1.5 shadow-2xl ml-2 animate-in zoom-in-95"
+                >
+                  {route.label}
+                </TooltipContent>
+              )}
+            </Tooltip>
+          );
+        })}
+      </div>
+
+      <div className="p-3 border-t border-white/5 space-y-2 pb-8 bg-slate-900/20">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Link
+              href="/admin/settings"
+              className={cn(
+                "flex items-center transition-all",
+                isCollapsed
+                  ? "h-12 w-12 justify-center mx-auto rounded-2xl"
+                  : "rounded-2xl px-5 py-4 gap-4",
+                pathname.includes("/admin/settings")
+                  ? "bg-slate-800 text-white shadow-lg"
+                  : "text-slate-500 hover:bg-white/5 hover:text-white",
+              )}
+            >
+              <Settings
+                className={cn("shrink-0", isCollapsed ? "h-5 w-5" : "h-4 w-4")}
+              />
+              {!isCollapsed && (
+                <span className="text-[10px] font-black uppercase italic tracking-widest animate-in fade-in">
+                  Settings
+                </span>
+              )}
+            </Link>
+          </TooltipTrigger>
+          {isCollapsed && (
+            <TooltipContent
+              side="right"
+              className="bg-slate-800 border-none text-white font-black italic uppercase text-[9px] ml-2 px-3 py-1.5"
+            >
+              Settings
+            </TooltipContent>
+          )}
+        </Tooltip>
+
         <button
-          className="w-full flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold text-red-500 hover:bg-red-50 transition-all active:scale-95"
           onClick={() => {
-            // Hapus Cookie
             document.cookie =
               "auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
-            // Redirect ke login publik tenant
-            window.location.href = "/login";
+            window.location.href = "/admin/login";
           }}
+          className={cn(
+            "w-full flex items-center transition-all group text-red-500 hover:bg-red-500/10",
+            isCollapsed
+              ? "h-12 w-12 justify-center mx-auto rounded-2xl"
+              : "rounded-2xl px-5 py-4 gap-4",
+          )}
         >
-          <LogOut className="h-5 w-5" />
-          Logout
+          <LogOut
+            className={cn(
+              "shrink-0 transition-transform group-hover:-translate-x-0.5",
+              isCollapsed ? "h-5 w-5" : "h-4 w-4",
+            )}
+          />
+          {!isCollapsed && (
+            <span className="text-[10px] font-black uppercase italic tracking-widest animate-in fade-in">
+              Logout
+            </span>
+          )}
         </button>
       </div>
     </div>

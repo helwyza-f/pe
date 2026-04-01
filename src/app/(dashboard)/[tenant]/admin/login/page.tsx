@@ -43,7 +43,7 @@ export default function TenantLoginPage() {
       toast.success("Login Berhasil!");
 
       // REDIRECT KE PATH KHUSUS DASHBOARD
-      router.push(`/dashboard`);
+      router.push(`/admin/dashboard`);
     } catch (err: any) {
       toast.error(err.response?.data?.error || "Login Gagal.");
     } finally {
